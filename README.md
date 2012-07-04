@@ -3,6 +3,9 @@
 
 Change the theme for index page and gallery page,display the exif info for each image, please see [brucebot.com/gallery](http://brucebot.com/gallery) for an example.
 
+Thanks [ggreer](https://github.com/ggreer) and [frankyue](https://github.com/frankyue)
+
+
 This is a [Jekyll plugin](https://github.com/mojombo/jekyll/wiki/Plugins) that generates galleries from directories full of images. It uses [RMagick](http://rmagick.rubyforge.org/) to create thumbnails.
 
 This plugin is quite minimalist. It generates galleries with no pagination, no sub-galleries, and no descriptions. [See my gallery](http://geoff.greer.fm/photos/) for an example of what it looks like.
