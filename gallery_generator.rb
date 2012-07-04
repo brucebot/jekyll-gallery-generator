@@ -1,6 +1,8 @@
 require 'exifr'
 require 'RMagick'
+require 'date'
 include Magick
+
 
 include FileUtils
 
@@ -22,7 +24,7 @@ module Jekyll
 
       self.process(@name)
       self.read_yaml(File.join(base, "_layouts"), "gallery_index.html")
-      self.data["title"] = "Photos"
+      self.data["title"] = "我的相册"
       self.data["galleries"] = []
       begin
         galleries.sort! {|a,b| b.data["date_time"] <=> a.data["date_time"]}
@@ -40,22 +42,25 @@ module Jekyll
       @dir = dir
       @name = "index.html"
       @images = []
+      @image_info = []
+      @amount = 0
+      @image_exif_date= ""
 
       best_image = nil
       max_size = 300
       self.process(@name)
       self.read_yaml(File.join(base, "_layouts"), "gallery_page.html")
       self.data["gallery"] = gallery_name
-      gallery_title_prefix = site.config["gallery_title_prefix"] || "Photos: "
+      gallery_title_prefix = site.config["gallery_title_prefix"] || "Gallery: "
       gallery_name = gallery_name.gsub("_", " ").gsub(/\w+/) {|word| word.capitalize}
       self.data["name"] = gallery_name
       self.data["title"] = "#{gallery_title_prefix}#{gallery_name}"
       thumbs_dir = "#{site.dest}/#{dir}/thumbs"
-
+      
       FileUtils.mkdir_p(thumbs_dir, :mode => 0755)
       Dir.foreach(dir) do |image|
         if image.chars.first != "." and image.downcase().end_with?(*$image_extensions)
-          @images.push(image)
+          @images.push(image) 
           best_image = image
           @site.static_files << GalleryFile.new(site, base, "#{dir}/thumbs/", image)
           if File.file?("#{thumbs_dir}/#{image}") == false or File.mtime("#{dir}/#{image}") > File.mtime("#{thumbs_dir}/#{image}")
@@ -69,18 +74,33 @@ module Jekyll
               puts $!
             end
           end
-        end
-      end
+          begin
+            image_exif=EXIFR::JPEG::new("#{dir}/#{image}")
+            if image_exif.date_time_original.nil?
+              image_exif_date= ""
+            else
+              image_exif_date= image_exif.date_time_original.strftime('%Y-%m-%d')
+            end
+            #simage_info= "时间:"+image_exif.date_time.strftime('%Y-%m-%d')+ " 相机:"+ image_exif.model+ " 快门:"+ image_exif.exposure_time.to_s+ " 焦距:" + image_exif.focal_length.to_f.to_s + "mm 光圈:F" + image_exif.f_number.to_f.to_s+ " ISO:" + image_exif.iso_speed_ratings.to_s
+            simage_info= "时间:"+image_exif_date + " 相机:"+ image_exif.model+ " 快门:"+ image_exif.exposure_time.to_s+ " 焦距:" + image_exif.focal_length.to_f.to_s + "mm 光圈:F" + image_exif.f_number.to_f.to_s+ " ISO:" + image_exif.iso_speed_ratings.to_s
+            @image_info.push(simage_info)
+          end
+
+      end      
+      end      
       self.data["images"] = @images
       begin
         best_image = site.config["galleries"][self.data["gallery"]]["best_image"]
       rescue
       end
       self.data["best_image"] = best_image
+      self.data["image_info"] = @image_info
+      self.data["amount"] = @images.count-1
       begin
         self.data["date_time"] = EXIFR::JPEG.new("#{dir}/#{best_image}").date_time.to_i
       rescue
       end
+
     end
   end
 
